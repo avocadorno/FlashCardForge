@@ -139,7 +139,7 @@ public partial class DefineViewModel : ObservableRecipient
         Keyword = _wordExtractionService.GetWord(_htmlDocument);
         _keywordTextBoxSelectAllAction();
         AudioURL = _wordExtractionService.GetAudioURL(_htmlDocument);
-        //Definition = _wordExtractionService.GetDefinition(_htmlDocument);
+        Definition = _wordExtractionService.GetDefinition(_htmlDocument);
         //var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
         //foreach (var lemma in lemmas)
         //    Definition = Definition.Replace(lemma, "____");

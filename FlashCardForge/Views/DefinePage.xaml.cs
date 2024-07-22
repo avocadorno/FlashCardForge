@@ -1,4 +1,5 @@
-﻿using FlashCardForge.ViewModels;
+﻿using System.Text.RegularExpressions;
+using FlashCardForge.ViewModels;
 
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -25,6 +26,7 @@ public sealed partial class DefinePage : Page
                 ViewModel.SetWebView(dictionaryWebView.CoreWebView2);
             }
         };
+
         keyWordTextBox.Loaded += (s, e) =>
         {
             ViewModel.SetKeyWordTextBoxSelectAllCommand(KeyWordTextBox_SelectAll);

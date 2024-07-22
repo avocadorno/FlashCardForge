@@ -28,8 +28,13 @@ public class CollinsESPExtractionService : IWordExtractionService
     public string GetDefinition(HtmlDocument htmlDocument)
     {
         var entry = htmlDocument.QuerySelector(EntrySectionSelector);
-
-        return string.Empty;
+        var homs = entry.QuerySelectorAll(".hom");
+        var definition = new List<string>();
+        foreach (var hom in homs)
+        {
+            definition.Add(hom.OuterHtml);
+        }
+        return string.Join("<hr>", definition);
     }
     public string GetPronunciation(HtmlDocument htmlDocument) => string.Empty;
     public string GetQueryURL(string keyword) => $"https://www.collinsdictionary.com/search/?dictCode=spanish-english&q={keyword}";
