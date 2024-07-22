@@ -10,11 +10,12 @@ using HtmlAgilityPack.CssSelectors.NetCore;
 namespace FlashCardForge.Core.Services;
 public class CollinsESPExtractionService : IWordExtractionService
 {
+    private static readonly string EntrySectionSelector = ".dictlink > .dictionary.benedict";
     public string BaseURL => "https://www.collinsdictionary.com/dictionary/spanish-english/";
 
     public string GetAudioURL(HtmlDocument htmlDocument)
     {
-        var entry = htmlDocument.QuerySelector(".dictentry > .dictlink > .benedict");
+        var entry = htmlDocument.QuerySelector(EntrySectionSelector);
         try
         {
             return entry.QuerySelectorAll(".hwd_sound.sound").Last().GetAttributeValue("data-src-mp3", string.Empty);
@@ -24,14 +25,19 @@ public class CollinsESPExtractionService : IWordExtractionService
             return string.Empty;
         }
     }
-    public string GetDefinition(HtmlDocument htmlDocument) => throw new NotImplementedException();
+    public string GetDefinition(HtmlDocument htmlDocument)
+    {
+        var entry = htmlDocument.QuerySelector(EntrySectionSelector);
+
+        return string.Empty;
+    }
     public string GetPronunciation(HtmlDocument htmlDocument) => string.Empty;
     public string GetQueryURL(string keyword) => $"https://www.collinsdictionary.com/search/?dictCode=spanish-english&q={keyword}";
     public string GetWord(HtmlDocument htmlDocument)
     {
         try
         {
-            return htmlDocument.QuerySelector(".title_container .orth").InnerText;
+            return htmlDocument.DocumentNode.QuerySelector(".title_container .orth").InnerText;
         }
         catch (NullReferenceException)
         {
