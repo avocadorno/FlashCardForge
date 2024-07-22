@@ -22,9 +22,9 @@ public partial class DefineViewModel : ObservableRecipient
     private List<Card> deck;
 
     private CoreWebView2 _webView;
-    private string? _scriptToExecute;
     private bool _loadingCompleted = true;
     private HtmlDocument _htmlDocument;
+    private Action _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
     private string? _keyword;
@@ -52,7 +52,7 @@ public partial class DefineViewModel : ObservableRecipient
     {
         if (!string.IsNullOrEmpty(Keyword))
         {
-            Navigate(_wordExtractionService.GetQueryURL(Keyword), _wordExtractionService.PostLoadingScript);
+            Navigate(_wordExtractionService.GetQueryURL(Keyword));
         }
     }
 
@@ -73,26 +73,17 @@ public partial class DefineViewModel : ObservableRecipient
         {
             if (!_loadingCompleted)
             {
-                if (!string.IsNullOrEmpty(_scriptToExecute))
-                {
-                    await _webView.ExecuteScriptAsync(_scriptToExecute);
-                    _scriptToExecute = null;
-                }
-                var retries = 0;
-                bool isComplete = false;
-                while (!isComplete && retries < MAX_RETRIES)
-                {
-                    var readyState = await _webView.ExecuteScriptAsync("var element = document.querySelector('#collinsdiv'); element && element.hasChildNodes();");
-                    isComplete = readyState.Trim('"') == "true";
-                    await Task.Delay(100); // Small delay to avoid tight loop
-                    retries += 1;
-                }
                 UpdateLoadingCompleted();
                 var html = await GetHtmlContentAsync();
                 _htmlDocument.LoadHtml(html);
                 UpdateFields();
             }
         };
+    }
+    
+    public void SetKeyWordTextBoxSelectAllCommand(Action keywordTextBoxSelectAllAction)
+    {
+        _keywordTextBoxSelectAllAction = keywordTextBoxSelectAllAction;
     }
 
     [RelayCommand]
@@ -146,11 +137,12 @@ public partial class DefineViewModel : ObservableRecipient
     private void UpdateFields()
     {
         Keyword = _wordExtractionService.GetWord(_htmlDocument);
-        AudioURL = _wordExtractionService.GetAudioURL(_htmlDocument);
-        Definition = _wordExtractionService.GetDefinition(_htmlDocument);
-        var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
-        foreach (var lemma in lemmas)
-            Definition = Definition.Replace(lemma, "____");
+        _keywordTextBoxSelectAllAction();
+        //AudioURL = _wordExtractionService.GetAudioURL(_htmlDocument);
+        //Definition = _wordExtractionService.GetDefinition(_htmlDocument);
+        //var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
+        //foreach (var lemma in lemmas)
+        //    Definition = Definition.Replace(lemma, "____");
     }
 
     private void UpdateLoadingCompleted()
@@ -168,10 +160,9 @@ public partial class DefineViewModel : ObservableRecipient
         }
         return string.Empty;
     }
-    private void Navigate(string url, string script)
+    private void Navigate(string url)
     {
         UpdateLoadingCompleted();
-        _scriptToExecute = script;
         _webView.Navigate(url);
     }
 }

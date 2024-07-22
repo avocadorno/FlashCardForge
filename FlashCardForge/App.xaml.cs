@@ -68,7 +68,7 @@ public partial class App : Application
             // Core Services
             services.AddSingleton<ISampleDataService, SampleDataService>();
             services.AddSingleton<IFileService, FileService>();
-            services.AddSingleton<IWordExtractionService, WordReferenceESPService>();
+            services.AddSingleton<IWordExtractionService, CollinsESPExtractionService>();
             services.AddSingleton<ILemmatizationService, SpanishLemmatizationService>();
 
             // Views and ViewModels

@@ -25,6 +25,10 @@ public sealed partial class DefinePage : Page
                 ViewModel.SetWebView(dictionaryWebView.CoreWebView2);
             }
         };
+        keyWordTextBox.Loaded += (s, e) =>
+        {
+            ViewModel.SetKeyWordTextBoxSelectAllCommand(KeyWordTextBox_SelectAll);
+        };
     }
 
     private void KeyWordTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -36,5 +40,11 @@ public sealed partial class DefinePage : Page
                 ViewModel.LookupCommand.Execute(null);
             }
         }
+    }
+
+    private void KeyWordTextBox_SelectAll()
+    {
+        keyWordTextBox.SelectAll();
+        keyWordTextBox.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
     }
 }

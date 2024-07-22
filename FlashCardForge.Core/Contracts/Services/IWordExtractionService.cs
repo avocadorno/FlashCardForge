@@ -9,10 +9,6 @@ namespace FlashCardForge.Core.Contracts.Services;
 public interface IWordExtractionService
 {
     public string GetQueryURL(string keyword);
-    public string PostLoadingScript
-    {
-        get;
-    }
     public string BaseURL
     {
         get;
