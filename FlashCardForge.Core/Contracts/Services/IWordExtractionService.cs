@@ -13,6 +13,7 @@ public interface IWordExtractionService
     {
         get;
     }
+    public string GetHtmlString(string keyword);
     public string GetWord(HtmlDocument htmlDocument);
     public string GetDefinition(HtmlDocument htmlDocument);
     public string GetAudioURL(HtmlDocument htmlDocument);

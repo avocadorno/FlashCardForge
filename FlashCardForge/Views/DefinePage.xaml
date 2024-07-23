@@ -104,7 +104,7 @@
             MinHeight="200"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Source="https://www.collinsdictionary.com/" />
+            Source="https://www.wordreference.com/" />
 
     </Grid>
 </Page>

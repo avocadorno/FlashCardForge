@@ -53,6 +53,8 @@ public partial class DefineViewModel : ObservableRecipient
         if (!string.IsNullOrEmpty(Keyword))
         {
             Navigate(_wordExtractionService.GetQueryURL(Keyword));
+            _htmlDocument.LoadHtml(_wordExtractionService.GetHtmlString(Keyword));
+            UpdateFields();
         }
     }
 
@@ -74,13 +76,10 @@ public partial class DefineViewModel : ObservableRecipient
             if (!_loadingCompleted)
             {
                 UpdateLoadingCompleted();
-                var html = await GetHtmlContentAsync();
-                _htmlDocument.LoadHtml(html);
-                UpdateFields();
             }
         };
     }
-    
+
     public void SetKeyWordTextBoxSelectAllCommand(Action keywordTextBoxSelectAllAction)
     {
         _keywordTextBoxSelectAllAction = keywordTextBoxSelectAllAction;
@@ -163,6 +162,6 @@ public partial class DefineViewModel : ObservableRecipient
     private void Navigate(string url)
     {
         UpdateLoadingCompleted();
-        _webView.Navigate(url);
+        //_webView.Navigate(url);
     }
 }

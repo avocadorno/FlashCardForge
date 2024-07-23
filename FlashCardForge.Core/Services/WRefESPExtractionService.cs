@@ -10,11 +10,22 @@ using HtmlAgilityPack;
 using HtmlAgilityPack.CssSelectors.NetCore;
 
 namespace FlashCardForge.Core.Services;
-public class WRExtractionService : IWordExtractionService
+public class WRefESPExtractionService : IWordExtractionService
 {
+    private readonly IWebScrappingService _scrappingService;
+    public WRefESPExtractionService()
+    {
+        _scrappingService = new SeleniumScrappingService();
+    }
     public string BaseURL => "https://www.wordreference.com";
     public string GetQueryURL(string keyword) => $"{BaseURL}/es/en/translation.asp?spen={keyword}";
-    public string PostLoadingScript => "document.getElementById(\"tabHC\").click();";
+    public string SelectSelectors => "document.getElementById(\"tabHC\").click();";
+
+    public string GetHtmlString(string keyword)
+    {
+        return _scrappingService.ScrapeWebsite(GetQueryURL(keyword), "#tabHC", "#clickableHC");
+    }
+
     public string GetWord(HtmlDocument htmlDocument)
     {
         var headerWord = htmlDocument.DocumentNode.QuerySelector(".headerWord");

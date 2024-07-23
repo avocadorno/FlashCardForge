@@ -53,6 +53,8 @@ public class CollinsExtractionService : IWordExtractionService
 
         return string.Join("<hr>", definition);
     }
+
+    public string GetHtmlString(string keyword) => throw new NotImplementedException();
     public string GetPronunciation(HtmlDocument htmlDocument) => string.Empty;
     public string GetQueryURL(string keyword) => $"https://www.collinsdictionary.com/search/?dictCode=spanish-english&q={keyword}";
     public string GetWord(HtmlDocument htmlDocument)

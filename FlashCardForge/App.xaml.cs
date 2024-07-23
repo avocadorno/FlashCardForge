@@ -68,7 +68,7 @@ public partial class App : Application
             // Core Services
             services.AddSingleton<ISampleDataService, SampleDataService>();
             services.AddSingleton<IFileService, FileService>();
-            services.AddSingleton<IWordExtractionService, CollinsExtractionService>();
+            services.AddSingleton<IWordExtractionService, WRefESPExtractionService>();
             services.AddSingleton<ILemmatizationService>(new LemmatizationService(Mosaik.Core.Language.Spanish));
 
             // Views and ViewModels
