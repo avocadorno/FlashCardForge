@@ -10,7 +10,7 @@ using HtmlAgilityPack;
 using HtmlAgilityPack.CssSelectors.NetCore;
 
 namespace FlashCardForge.Core.Services;
-public class WordReferenceESPService : IWordExtractionService
+public class WRExtractionService : IWordExtractionService
 {
     public string BaseURL => "https://www.wordreference.com";
     public string GetQueryURL(string keyword) => $"{BaseURL}/es/en/translation.asp?spen={keyword}";

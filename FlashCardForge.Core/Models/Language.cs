@@ -17,4 +17,8 @@ public class Language
     {
         get; set;
     }
+    public ICollection<Deck> Decks
+    {
+        get; set;
+    }
 }

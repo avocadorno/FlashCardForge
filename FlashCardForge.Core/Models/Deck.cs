@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace FlashCardForge.Core.Models;
-internal class Deck
+public class Deck
 {
     [Key]
     public Guid Id
@@ -14,10 +14,6 @@ internal class Deck
         get; set;
     }
     public string Name
-    {
-        get; set;
-    }
-    public Language Language
     {
         get; set;
     }
