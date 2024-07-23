@@ -8,18 +8,31 @@ using FlashCardForge.Core.Contracts.Services;
 using Mosaik.Core;
 
 namespace FlashCardForge.Core.Services;
-public class SpanishLemmatizationService : ILemmatizationService
+public class LemmatizationService : ILemmatizationService
 {
 
     private Pipeline _nlp;
-    public List<string> GetAppearedReflection(string doc, string word)
-    {
-        Catalyst.Models.Spanish.Register();
-        Storage.Current = new DiskStorage("catalyst-models");
-        _nlp = Pipeline.ForAsync(Language.Spanish).GetAwaiter().GetResult();
+    private readonly Language _language;
 
+    public LemmatizationService(Language language)
+    {
+        _language = language;
+        switch (_language)
+        {
+            case Language.Spanish:
+                Catalyst.Models.Spanish.Register();
+                break;
+            default:
+                throw new NotSupportedException($"Language {_language} is not supported.");
+        }
+    }
+
+    public async Task<List<string>> GetAppearedReflection(string doc, string word)
+    {
+        Storage.Current = new DiskStorage("catalyst-models");
+        _nlp = await Pipeline.ForAsync(_language);
         List<string> lemmas = new List<string>() { word };
-        var catalystDoc = new Document(doc, Language.Spanish);
+        var catalystDoc = new Document(doc, _language);
         _nlp.ProcessSingle(catalystDoc);
         foreach (var sentence in catalystDoc)
         {

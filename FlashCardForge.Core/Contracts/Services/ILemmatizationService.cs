@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 namespace FlashCardForge.Core.Contracts.Services;
 public interface ILemmatizationService
 {
-    public List<string> GetAppearedReflection(string doc, string word);
+    public Task<List<string>> GetAppearedReflection(string doc, string word);
 }
