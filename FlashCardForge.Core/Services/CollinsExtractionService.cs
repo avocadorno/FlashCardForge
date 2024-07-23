@@ -31,7 +31,7 @@ public class CollinsExtractionService : IWordExtractionService
             foreach (var sense in senses)
             {
                 HTMLHelper.RemoveTag(sense, ".sensenum");
-
+                //TODO: pasar, camino
                 var meaning = new List<HtmlNode>();
                 var examples = new List<HtmlNode>();
                 var exampleSection = false;
