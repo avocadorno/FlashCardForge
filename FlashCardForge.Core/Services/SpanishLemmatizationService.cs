@@ -10,20 +10,17 @@ using Mosaik.Core;
 namespace FlashCardForge.Core.Services;
 public class SpanishLemmatizationService : ILemmatizationService
 {
-    private Pipeline nlp;
 
-    public SpanishLemmatizationService()
+    private Pipeline _nlp;
+    public List<string> GetAppearedReflection(string doc, string word)
     {
         Catalyst.Models.Spanish.Register();
         Storage.Current = new DiskStorage("catalyst-models");
-        nlp = Pipeline.ForAsync(Language.Spanish).GetAwaiter().GetResult();
-    }
+        _nlp = Pipeline.ForAsync(Language.Spanish).GetAwaiter().GetResult();
 
-    public List<string> GetAppearedReflection(string doc, string word)
-    {
         List<string> lemmas = new List<string>() { word };
         var catalystDoc = new Document(doc, Language.Spanish);
-        nlp.ProcessSingle(catalystDoc);
+        _nlp.ProcessSingle(catalystDoc);
         foreach (var sentence in catalystDoc)
         {
             foreach (var token in sentence)
