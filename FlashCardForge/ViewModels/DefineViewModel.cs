@@ -19,10 +19,8 @@ public partial class DefineViewModel : ObservableRecipient
     private readonly IWordExtractionService _wordExtractionService;
     private readonly ILemmatizationService _lemmatizationService;
 
-    private List<Card> deck;
-
-    private CoreWebView2 _webView;
-    private HtmlDocument _htmlDocument;
+    private readonly List<Card> deck;
+    private readonly HtmlDocument _htmlDocument;
     private Action _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
@@ -51,7 +49,6 @@ public partial class DefineViewModel : ObservableRecipient
     {
         if (!string.IsNullOrEmpty(Keyword))
         {
-            Navigate(_wordExtractionService.GetQueryURL(Keyword));
             _htmlDocument.LoadHtml(_wordExtractionService.GetHtmlString(Keyword));
             UpdateFields();
         }
@@ -66,11 +63,6 @@ public partial class DefineViewModel : ObservableRecipient
     }
 
     private bool CanLookup() => !string.IsNullOrEmpty(Keyword);
-
-    public void SetWebView(CoreWebView2 webView)
-    {
-        _webView = webView;
-    }
 
     public void SetKeyWordTextBoxSelectAllCommand(Action keywordTextBoxSelectAllAction)
     {
@@ -125,19 +117,14 @@ public partial class DefineViewModel : ObservableRecipient
         }
     }
 
-    private void UpdateFields()
+    private async void UpdateFields()
     {
         Keyword = _wordExtractionService.GetWord(_htmlDocument);
         _keywordTextBoxSelectAllAction();
         AudioURL = _wordExtractionService.GetAudioURL(_htmlDocument);
         Definition = _wordExtractionService.GetDefinition(_htmlDocument);
-        //var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
-        //foreach (var lemma in lemmas)
-        //    Definition = Definition.Replace(lemma, "____");
-    }
-
-    private void Navigate(string url)
-    {
-        _webView.Navigate(url);
+        var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
+        foreach (var lemma in await lemmas)
+            Definition = Definition.Replace(lemma, "____");
     }
 }

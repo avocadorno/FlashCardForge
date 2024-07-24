@@ -49,11 +49,6 @@
                         Text="{x:Bind ViewModel.Definition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         TextWrapping="Wrap" />
 
-                    <WebView2
-                        x:Name="definitionPreview"
-                        MaxHeight="250"
-                        helpers:Webview2Helper.BindableHtml="{x:Bind ViewModel.Definition, Mode=OneWay}" />
-
                     <TextBox
                         HorizontalAlignment="Stretch"
                         Header="Audio URL"
@@ -98,13 +93,12 @@
             </Grid>
         </Grid>
         <WebView2
-            x:Name="dictionaryWebView"
+            x:Name="definitionPreview"
             Grid.Column="1"
-            MinWidth="200"
-            MinHeight="200"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Source="https://www.wordreference.com/" />
+            Margin="0,0,0,20"
+            helpers:Webview2Helper.BindableHtml="{x:Bind ViewModel.Definition, Mode=OneWay}" />
 
     </Grid>
 </Page>

@@ -18,15 +18,6 @@ public sealed partial class DefinePage : Page
         ViewModel = App.GetService<DefineViewModel>();
         InitializeComponent();
 
-        dictionaryWebView.Loaded += async (s, e) =>
-        {
-            await dictionaryWebView.EnsureCoreWebView2Async();
-            if (dictionaryWebView.CoreWebView2 != null)
-            {
-                ViewModel.SetWebView(dictionaryWebView.CoreWebView2);
-            }
-        };
-
         keyWordTextBox.Loaded += (s, e) =>
         {
             ViewModel.SetKeyWordTextBoxSelectAllCommand(KeyWordTextBox_SelectAll);

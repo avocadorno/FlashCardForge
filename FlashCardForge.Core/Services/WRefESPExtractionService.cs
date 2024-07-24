@@ -183,8 +183,15 @@ public class WRefESPExtractionService : IWordExtractionService
                 var phrases = (partsBetweenBr.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
                 definitions.Add(definition + "\n" + phrases);
             }
-
             definitionText += (definitions.Count > 0) ? HTMLHelper.GetOrderedList(definitions) + "<hr>" : String.Empty;
+        }
+        var tagToRemove = "<hr>";
+
+        int lastIndex = definitionText.LastIndexOf(tagToRemove);
+
+        if (lastIndex >= 0)
+        {
+            definitionText = definitionText.Remove(lastIndex, tagToRemove.Length);
         }
         return HTMLHelper.GetBeautified(definitionText);
     }

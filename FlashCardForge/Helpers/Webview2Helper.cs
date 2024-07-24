@@ -35,10 +35,7 @@ internal static class Webview2Helper
             {
                 await webView.EnsureCoreWebView2Async();
                 webView.NavigateToString(html);
-                webView.Height = webView.MaxHeight;
             }
-            else
-                webView.Height = 0;
         }
     }
 }

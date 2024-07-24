@@ -29,7 +29,7 @@ public class LemmatizationService : ILemmatizationService
 
     public async Task<List<string>> GetAppearedReflection(string doc, string word)
     {
-        Storage.Current = new DiskStorage("catalyst-models");
+        Storage.Current = new DiskStorage("C:/catalyst-models");
         _nlp = await Pipeline.ForAsync(_language);
         List<string> lemmas = new List<string>() { word };
         var catalystDoc = new Document(doc, _language);
