@@ -95,9 +95,9 @@
         <WebView2
             x:Name="definitionPreview"
             Grid.Column="1"
+            Margin="0,0,0,20"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Margin="0,0,0,20"
             helpers:Webview2Helper.BindableHtml="{x:Bind ViewModel.Definition, Mode=OneWay}" />
 
     </Grid>

@@ -42,31 +42,39 @@ internal class SeleniumScrappingService : IWebScrappingService
 
     public string ScrapeWebsite(string url, string buttonCssSelector = null, string waitForElementCssSelector = null)
     {
-        WebDriver.Navigate().GoToUrl(url);
-        if (buttonCssSelector != null)
+        try
         {
-            try
+            WebDriver.Navigate().GoToUrl(url);
+
+            if (buttonCssSelector != null)
             {
-                var button = WebDriver.FindElement(By.CssSelector(buttonCssSelector));
-                button.Click();
+                try
+                {
+                    var button = WebDriver.FindElement(By.CssSelector(buttonCssSelector));
+                    button.Click();
+                }
+                catch (NoSuchElementException)
+                {
+                    return string.Empty;
+                }
             }
-            catch (NoSuchElementException)
+            if (waitForElementCssSelector != null)
             {
-                return string.Empty;
+                try
+                {
+                    var wait = new WebDriverWait(WebDriver, TimeSpan.FromSeconds(10));
+                    wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector(waitForElementCssSelector)));
+                }
+                catch (WebDriverTimeoutException)
+                {
+                    return string.Empty;
+                }
             }
+            return WebDriver.PageSource;
         }
-        if (waitForElementCssSelector != null)
+        catch (Exception e)
         {
-            try
-            {
-                var wait = new WebDriverWait(WebDriver, TimeSpan.FromSeconds(10));
-                wait.Until(ExpectedConditions.ElementIsVisible(By.CssSelector(waitForElementCssSelector)));
-            }
-            catch (WebDriverTimeoutException)
-            {
-                return string.Empty;
-            }
+            return string.Empty;
         }
-        return WebDriver.PageSource;
     }
 }

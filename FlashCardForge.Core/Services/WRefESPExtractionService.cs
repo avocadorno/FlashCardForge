@@ -30,7 +30,7 @@ public class WRefESPExtractionService : IWordExtractionService
 
     public string GetWord(HtmlDocument htmlDocument)
     {
-        return htmlDocument.DocumentNode.QuerySelector(".headerWord")?.InnerHtml ?? string.Empty;
+        return htmlDocument.DocumentNode.QuerySelector(".clickableHC .hw")?.InnerHtml ?? "Not Found";
     }
     public string GetDefinition(HtmlDocument htmlDocument)
     {

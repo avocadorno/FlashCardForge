@@ -21,7 +21,7 @@ public partial class DefineViewModel : ObservableRecipient
 
     private readonly List<Card> deck;
     private readonly HtmlDocument _htmlDocument;
-    private Action _keywordTextBoxSelectAllAction;
+    private Action? _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
     private string? _keyword;
@@ -72,6 +72,8 @@ public partial class DefineViewModel : ObservableRecipient
     [RelayCommand]
     public void AddToDeck()
     {
+        if (!CanAddToDeck())
+            return;
         deck.Add(new Card
         {
             Word = Keyword,
@@ -82,6 +84,8 @@ public partial class DefineViewModel : ObservableRecipient
         Clear();
     }
 
+    private bool CanAddToDeck() => !string.IsNullOrEmpty(Keyword) && !string.IsNullOrEmpty(Definition);
+
     [RelayCommand]
     public async void Export()
     {
@@ -89,7 +93,8 @@ public partial class DefineViewModel : ObservableRecipient
         {
             string url = card.AudioURL;
             string filePath = $"D:/Output/{card.AudioFileName}";
-
+            if (string.IsNullOrEmpty(url))
+                continue;
             using (HttpClient client = new HttpClient())
             {
                 using (HttpResponseMessage response = await client.GetAsync(url))
@@ -125,6 +130,7 @@ public partial class DefineViewModel : ObservableRecipient
         Definition = _wordExtractionService.GetDefinition(_htmlDocument);
         var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
         foreach (var lemma in await lemmas)
-            Definition = Definition.Replace(lemma, "____");
+            if (!string.IsNullOrEmpty(lemma))
+                Definition = Definition.Replace(lemma, "____");
     }
 }
