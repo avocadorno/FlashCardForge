@@ -13,7 +13,7 @@ namespace FlashCardForge.Core.Services;
 public class WRefESPExtractionService : IWordExtractionService
 {
     private readonly IWebScrappingService _scrappingService;
-    
+
     public WRefESPExtractionService()
     {
         _scrappingService = new SeleniumScrappingService();
@@ -30,13 +30,19 @@ public class WRefESPExtractionService : IWordExtractionService
 
     public string GetWord(HtmlDocument htmlDocument)
     {
-        var headerWord = htmlDocument.DocumentNode.QuerySelector(".headerWord");
-        return headerWord?.InnerHtml ?? string.Empty;
+        return htmlDocument.DocumentNode.QuerySelector(".headerWord")?.InnerHtml ?? string.Empty;
     }
     public string GetDefinition(HtmlDocument htmlDocument)
     {
         var definitionText = "";
-        var categories = htmlDocument.DocumentNode.QuerySelectorAll("#clickableHC > .category");
+        IList<HtmlNode> categories;
+        var categoryNodes = htmlDocument.QuerySelectorAll("#clickableHC > .category");
+
+        if (categoryNodes.Count > 0 && htmlDocument.QuerySelectorAll("#clickableHC > .catsecondary").Count == 0)
+            categories = categoryNodes;
+        else
+            categories = htmlDocument.QuerySelectorAll("#clickableHC");
+
         foreach (var category in categories)
         {
             HTMLHelper.RemoveTag(category, ".headnumber");
@@ -49,8 +55,31 @@ public class WRefESPExtractionService : IWordExtractionService
                     return string.Empty;
 
                 partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim());
+                HtmlNode nodeWithClassPs = null;
+                foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
+                {
+                    if (node.HasClass("ps"))
+                    {
+                        nodeWithClassPs = node;
+                        break;
+                    }
+                }
+
+                if (nodeWithClassPs != null)
+                {
+                    var nodesToRemove = new List<HtmlNode>();
+                    foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
+                    {
+                        if (node == nodeWithClassPs)
+                            break;
+                        nodesToRemove.Add(node);
+                    }
+
+                    foreach (var node in nodesToRemove)
+                        node.Remove();
+                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return string.Empty;
             }
