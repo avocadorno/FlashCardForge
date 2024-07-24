@@ -22,8 +22,8 @@ public partial class DefineViewModel : ObservableRecipient
     private List<Card> deck;
 
     private CoreWebView2 _webView;
-    private bool _loadingCompleted = true;
     private HtmlDocument _htmlDocument;
+    private bool _scrapping;
     private Action _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
@@ -45,6 +45,7 @@ public partial class DefineViewModel : ObservableRecipient
         _wordExtractionService = wordExtractionService;
         _lemmatizationService = lemmatizationService;
         deck = new List<Card>();
+        _scrapping = false;
     }
 
     [RelayCommand(CanExecute = nameof(CanLookup))]
@@ -53,7 +54,11 @@ public partial class DefineViewModel : ObservableRecipient
         if (!string.IsNullOrEmpty(Keyword))
         {
             Navigate(_wordExtractionService.GetQueryURL(Keyword));
+            _scrapping = true;
+            LookupCommand.NotifyCanExecuteChanged();
             _htmlDocument.LoadHtml(_wordExtractionService.GetHtmlString(Keyword));
+            //_scrapping = false;
+            LookupCommand.NotifyCanExecuteChanged();
             UpdateFields();
         }
     }
@@ -66,18 +71,11 @@ public partial class DefineViewModel : ObservableRecipient
         AudioURL = string.Empty;
     }
 
-    private bool CanLookup() => !string.IsNullOrEmpty(Keyword) && _loadingCompleted;
+    private bool CanLookup() => !string.IsNullOrEmpty(Keyword) && !_scrapping;
 
     public void SetWebView(CoreWebView2 webView)
     {
         _webView = webView;
-        _webView.NavigationCompleted += async (s, e) =>
-        {
-            if (!_loadingCompleted)
-            {
-                UpdateLoadingCompleted();
-            }
-        };
     }
 
     public void SetKeyWordTextBoxSelectAllCommand(Action keywordTextBoxSelectAllAction)
@@ -144,12 +142,6 @@ public partial class DefineViewModel : ObservableRecipient
         //    Definition = Definition.Replace(lemma, "____");
     }
 
-    private void UpdateLoadingCompleted()
-    {
-        _loadingCompleted = !_loadingCompleted;
-        LookupCommand.NotifyCanExecuteChanged();
-    }
-
     private async Task<string> GetHtmlContentAsync()
     {
         if (_webView is not null)
@@ -161,7 +153,6 @@ public partial class DefineViewModel : ObservableRecipient
     }
     private void Navigate(string url)
     {
-        UpdateLoadingCompleted();
-        //_webView.Navigate(url);
+        _webView.Navigate(url);
     }
 }

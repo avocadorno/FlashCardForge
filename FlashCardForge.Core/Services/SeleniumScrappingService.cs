@@ -22,27 +22,14 @@ internal class SeleniumScrappingService : IWebScrappingService
                 var options = new ChromeOptions();
                 options.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
                 _driver = new ChromeDriver(options);
-                return _driver;
             }
-            else return _driver;
+            return _driver;
         }
     }
 
     public string ScrapeWebsite(string url, string buttonCssSelector, string waitForElementCssSelector)
     {
-        try
-        {
-
-            WebDriver.Navigate();
-        }
-        catch (NoSuchWindowException)
-        {
-            WebDriver.SwitchTo().NewWindow(WindowType.Window);
-        }
-        finally
-        {
-            WebDriver.Navigate().GoToUrl(url);
-        }
+        WebDriver.Navigate().GoToUrl(url);
         var button = WebDriver.FindElement(By.CssSelector(buttonCssSelector));
         button.Click();
         var wait = new WebDriverWait(WebDriver, TimeSpan.FromSeconds(10));
