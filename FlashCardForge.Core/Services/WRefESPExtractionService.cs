@@ -13,13 +13,15 @@ namespace FlashCardForge.Core.Services;
 public class WRefESPExtractionService : IWordExtractionService
 {
     private readonly IWebScrappingService _scrappingService;
+    
     public WRefESPExtractionService()
     {
         _scrappingService = new SeleniumScrappingService();
     }
+
     public string BaseURL => "https://www.wordreference.com";
+
     public string GetQueryURL(string keyword) => $"{BaseURL}/es/en/translation.asp?spen={keyword}";
-    public string SelectSelectors => "document.getElementById(\"tabHC\").click();";
 
     public string GetHtmlString(string keyword)
     {

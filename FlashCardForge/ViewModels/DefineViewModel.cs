@@ -23,7 +23,6 @@ public partial class DefineViewModel : ObservableRecipient
 
     private CoreWebView2 _webView;
     private HtmlDocument _htmlDocument;
-    private bool _scrapping;
     private Action _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
@@ -45,7 +44,6 @@ public partial class DefineViewModel : ObservableRecipient
         _wordExtractionService = wordExtractionService;
         _lemmatizationService = lemmatizationService;
         deck = new List<Card>();
-        _scrapping = false;
     }
 
     [RelayCommand(CanExecute = nameof(CanLookup))]
@@ -54,11 +52,7 @@ public partial class DefineViewModel : ObservableRecipient
         if (!string.IsNullOrEmpty(Keyword))
         {
             Navigate(_wordExtractionService.GetQueryURL(Keyword));
-            _scrapping = true;
-            LookupCommand.NotifyCanExecuteChanged();
             _htmlDocument.LoadHtml(_wordExtractionService.GetHtmlString(Keyword));
-            //_scrapping = false;
-            LookupCommand.NotifyCanExecuteChanged();
             UpdateFields();
         }
     }
@@ -71,7 +65,7 @@ public partial class DefineViewModel : ObservableRecipient
         AudioURL = string.Empty;
     }
 
-    private bool CanLookup() => !string.IsNullOrEmpty(Keyword) && !_scrapping;
+    private bool CanLookup() => !string.IsNullOrEmpty(Keyword);
 
     public void SetWebView(CoreWebView2 webView)
     {
@@ -142,15 +136,6 @@ public partial class DefineViewModel : ObservableRecipient
         //    Definition = Definition.Replace(lemma, "____");
     }
 
-    private async Task<string> GetHtmlContentAsync()
-    {
-        if (_webView is not null)
-        {
-            var html = await _webView.ExecuteScriptAsync($"document.documentElement.outerHTML;");
-            return Regex.Unescape(html).Trim('"');
-        }
-        return string.Empty;
-    }
     private void Navigate(string url)
     {
         _webView.Navigate(url);

@@ -7,6 +7,5 @@ using System.Threading.Tasks;
 namespace FlashCardForge.Core.Contracts.Services;
 internal interface IWebScrappingService
 {
-    public string ScrapeWebsite(string url);
     public string ScrapeWebsite(string url, string buttonCssSelector, string waitForElementCssSelector);
 }
