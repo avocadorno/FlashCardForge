@@ -48,7 +48,10 @@
                         ScrollViewer.VerticalScrollBarVisibility="Auto"
                         Text="{x:Bind ViewModel.Definition, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                         TextWrapping="Wrap" />
-
+                    <TextBox
+                        HorizontalAlignment="Stretch"
+                        Header="Phonetic"
+                        Text="{x:Bind ViewModel.Phonetics, Mode=TwoWay}" />
                     <TextBox
                         HorizontalAlignment="Stretch"
                         Header="Audio URL"

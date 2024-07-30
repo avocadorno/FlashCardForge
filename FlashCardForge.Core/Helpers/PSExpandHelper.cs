@@ -7,7 +7,13 @@ using System.Threading.Tasks;
 namespace FlashCardForge.Core.Helpers;
 public class PSAbbreviationHelper
 {
-    private static readonly Dictionary<string, string> _dictionary = new()
+    public enum Language
+    {
+        Spanish,
+        Italian
+    }
+    
+    private static readonly Dictionary<string, string> _ESDictionary = new()
     {
         ["sf"] = "sustantivo feminino",
         ["sm"] = "sustantivo masculino",
@@ -22,5 +28,32 @@ public class PSAbbreviationHelper
         ["conj"] = "conjunción",
     };
 
-    public static string GetFullPS(string abbr) => _dictionary.GetValueOrDefault(abbr.ToLower(), abbr).ToUpper();
+    private static readonly Dictionary<string, string> _ITDictionary = new()
+    {
+        ["sf"] = "sostantivo femminile",
+        ["sm"] = "sostantivo maschile",
+        ["vt"] = "verbo transitivo",
+        ["vi"] = "verbo intransitivo",
+        ["avv"] = "avverbio",
+        ["agg"] = "aggettivo",
+        ["n"] = "sostantivo",
+        //TODO
+        ["sm/f"] = "sustantivo masculino/feminino",
+        ["smf"] = "sustantivo masculino/feminino",
+        ["vpr"] = "verbo  pronominal",
+        ["conj"] = "conjunción",
+    };
+
+    public static string GetFullPS(string abbr, Language language)
+    {
+        switch (language)
+        {
+            case Language.Spanish:
+                return _ESDictionary.GetValueOrDefault(abbr.ToLower(), abbr).ToUpper();
+            case Language.Italian:
+                return _ITDictionary.GetValueOrDefault(abbr.ToLower(), abbr).ToUpper();
+            default:
+                return abbr;
+        }
+    } 
 }

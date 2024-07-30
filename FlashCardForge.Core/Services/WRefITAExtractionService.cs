@@ -10,18 +10,18 @@ using HtmlAgilityPack;
 using HtmlAgilityPack.CssSelectors.NetCore;
 
 namespace FlashCardForge.Core.Services;
-public class WRefESPExtractionService : IWordExtractionService
+public class WRefITAExtractionService : IWordExtractionService
 {
     private readonly IWebScrappingService _scrappingService;
 
-    public WRefESPExtractionService()
+    public WRefITAExtractionService()
     {
         _scrappingService = new SeleniumScrappingService();
     }
 
     public string BaseURL => "https://www.wordreference.com";
 
-    public string GetQueryURL(string keyword) => $"{BaseURL}/es/en/translation.asp?spen={keyword}";
+    public string GetQueryURL(string keyword) => $"{BaseURL}/iten/{keyword}";
 
     public string GetHtmlString(string keyword)
     {
@@ -202,9 +202,15 @@ public class WRefESPExtractionService : IWordExtractionService
         var audioString = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"listen_widget\"]/script")?.InnerHtml;
         if (audioString == null)
             return string.Empty;
-        var pattern = @"\/audio\/es\/Castellano\/es\d+\.mp3";
+        var pattern = @"\/audio\/it\/it\/it\d+\.mp3";
         Match match = Regex.Match(audioString, pattern);
         return match.Success ? BaseURL + match.Value : string.Empty;
     }
-    public string GetPronunciation(HtmlDocument htmlDocument) => string.Empty;
+    public string GetPronunciation(HtmlDocument htmlDocument)
+    {
+        var pronNode = htmlDocument.QuerySelector(".pron");
+        if (pronNode == null)
+            return string.Empty;
+        return $"[{pronNode.InnerHtml}]";
+    }
 }

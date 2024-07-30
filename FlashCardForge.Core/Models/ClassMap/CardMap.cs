@@ -12,6 +12,7 @@ public sealed class CardMap : ClassMap<Card>
     {
         Map(c => c.Word);
         Map(c => c.Definition);
+        Map(c => c.Phonetics);
         Map(c => c.AudioField);
     }
 }

@@ -21,7 +21,7 @@ public partial class DefineViewModel : ObservableRecipient
 
     private readonly List<Card> deck;
     private readonly HtmlDocument _htmlDocument;
-    private Action? _keywordTextBoxSelectAllAction;
+    private Action _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
     private string? _keyword;
@@ -29,6 +29,8 @@ public partial class DefineViewModel : ObservableRecipient
     private string? _word;
     [ObservableProperty]
     private string? _definition;
+    [ObservableProperty]
+    private string? _phonetics;
     [ObservableProperty]
     private string? _audioURL;
     [ObservableProperty]
@@ -59,6 +61,7 @@ public partial class DefineViewModel : ObservableRecipient
     {
         Keyword = string.Empty;
         Definition = string.Empty;
+        Phonetics = string.Empty;
         AudioURL = string.Empty;
     }
 
@@ -78,6 +81,7 @@ public partial class DefineViewModel : ObservableRecipient
         {
             Word = Keyword,
             Definition = HTMLHelper.GetBeautified(Definition),
+            Phonetics = Phonetics,
             AudioURL = AudioURL,
             AddedDate = DateTime.Now
         });
@@ -126,6 +130,7 @@ public partial class DefineViewModel : ObservableRecipient
     {
         Keyword = _wordExtractionService.GetWord(_htmlDocument);
         _keywordTextBoxSelectAllAction();
+        Phonetics = _wordExtractionService.GetPronunciation(_htmlDocument);
         AudioURL = _wordExtractionService.GetAudioURL(_htmlDocument);
         Definition = _wordExtractionService.GetDefinition(_htmlDocument);
         var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
