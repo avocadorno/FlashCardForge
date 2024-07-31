@@ -17,11 +17,10 @@ public partial class DefineViewModel : ObservableRecipient
 {
     private const int MAX_RETRIES = 10;
     private readonly IWordExtractionService _wordExtractionService;
-    private readonly ILemmatizationService _lemmatizationService;
 
     private readonly List<Card> deck;
     private readonly HtmlDocument _htmlDocument;
-    private Action _keywordTextBoxSelectAllAction;
+    private Action? _keywordTextBoxSelectAllAction;
 
     [ObservableProperty, NotifyCanExecuteChangedFor(nameof(LookupCommand))]
     private string? _keyword;
@@ -38,11 +37,10 @@ public partial class DefineViewModel : ObservableRecipient
     [ObservableProperty]
     private string? _deckName;
 
-    public DefineViewModel(IWordExtractionService wordExtractionService, ILemmatizationService lemmatizationService)
+    public DefineViewModel(IWordExtractionService wordExtractionService)
     {
         _htmlDocument = new HtmlDocument();
         _wordExtractionService = wordExtractionService;
-        _lemmatizationService = lemmatizationService;
         deck = new List<Card>();
     }
 
@@ -91,26 +89,20 @@ public partial class DefineViewModel : ObservableRecipient
     private bool CanAddToDeck() => !string.IsNullOrEmpty(Keyword) && !string.IsNullOrEmpty(Definition);
 
     [RelayCommand]
-    public async void Export()
+    public async Task Export()
     {
         foreach (var card in deck)
         {
-            string url = card.AudioURL;
-            string filePath = $"D:/Output/{card.AudioFileName}";
+            var url = card.AudioURL;
+            var filePath = $"D:/Output/{card.AudioFileName}";
             if (string.IsNullOrEmpty(url))
                 continue;
-            using (HttpClient client = new HttpClient())
-            {
-                using (HttpResponseMessage response = await client.GetAsync(url))
-                {
-                    response.EnsureSuccessStatusCode();
-                    using (Stream contentStream = await response.Content.ReadAsStreamAsync(),
-                                   fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
-                    {
-                        await contentStream.CopyToAsync(fileStream);
-                    }
-                }
-            }
+            using HttpClient client = new HttpClient();
+            using HttpResponseMessage response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            using Stream contentStream = await response.Content.ReadAsStreamAsync(),
+                           fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+            await contentStream.CopyToAsync(fileStream);
         }
 
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -118,24 +110,18 @@ public partial class DefineViewModel : ObservableRecipient
             Delimiter = "|"
         };
 
-        using (var writer = new StreamWriter("D:/Output/output.csv"))
-        using (var csv = new CsvWriter(writer, config))
-        {
-            csv.Context.RegisterClassMap<CardMap>();
-            csv.WriteRecords(deck);
-        }
+        using var writer = new StreamWriter("D:/Output/output.csv");
+        using var csv = new CsvWriter(writer, config);
+        csv.Context.RegisterClassMap<CardMap>();
+        csv.WriteRecords(deck);
     }
 
     private async void UpdateFields()
     {
         Keyword = _wordExtractionService.GetWord(_htmlDocument);
-        _keywordTextBoxSelectAllAction();
+        _keywordTextBoxSelectAllAction!();
         Phonetics = _wordExtractionService.GetPronunciation(_htmlDocument);
         AudioURL = _wordExtractionService.GetAudioURL(_htmlDocument);
-        Definition = _wordExtractionService.GetDefinition(_htmlDocument);
-        var lemmas = _lemmatizationService.GetAppearedReflection(Definition, Keyword);
-        foreach (var lemma in await lemmas)
-            if (!string.IsNullOrEmpty(lemma))
-                Definition = Definition.Replace(lemma, "____");
+        Definition = await _wordExtractionService.GetMaskedDefinition(_htmlDocument, Keyword);
     }
 }

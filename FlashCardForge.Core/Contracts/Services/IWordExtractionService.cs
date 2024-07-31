@@ -16,6 +16,7 @@ public interface IWordExtractionService
     public string GetHtmlString(string keyword);
     public string GetWord(HtmlDocument htmlDocument);
     public string GetDefinition(HtmlDocument htmlDocument);
+    public Task<string> GetMaskedDefinition(HtmlDocument htmlDocument, string Keyword);
     public string GetAudioURL(HtmlDocument htmlDocument);
     public string GetPronunciation(HtmlDocument htmlDocument);
 }

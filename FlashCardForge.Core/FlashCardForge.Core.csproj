@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.1.2" />
     <PackageReference Include="Catalyst" Version="1.0.48839" />
+    <PackageReference Include="Catalyst.Models.Italian" Version="1.0.30952" />
     <PackageReference Include="Catalyst.Models.Spanish" Version="1.0.30952" />
     <PackageReference Include="CsvHelper" Version="33.0.1" />
     <PackageReference Include="DotNetSeleniumExtras.WaitHelpers" Version="3.11.0" />

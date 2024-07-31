@@ -22,6 +22,9 @@ public class LemmatizationService : ILemmatizationService
             case Language.Spanish:
                 Catalyst.Models.Spanish.Register();
                 break;
+            case Language.Italian:
+                Catalyst.Models.Italian.Register();
+                break;
             default:
                 throw new NotSupportedException($"Language {_language} is not supported.");
         }

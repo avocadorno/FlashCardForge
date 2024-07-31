@@ -13,10 +13,12 @@ namespace FlashCardForge.Core.Services;
 public class WRefESPExtractionService : IWordExtractionService
 {
     private readonly IWebScrappingService _scrappingService;
+    private readonly ILemmatizationService _lemmatizationService;
 
     public WRefESPExtractionService()
     {
         _scrappingService = new SeleniumScrappingService();
+        _lemmatizationService = new LemmatizationService(Mosaik.Core.Language.Spanish);
     }
 
     public string BaseURL => "https://www.wordreference.com";
@@ -120,8 +122,8 @@ public class WRefESPExtractionService : IWordExtractionService
                 var phraseSpans = parentDiv.QuerySelectorAll(".phrase");
 
                 List<string> partsBetweenBr = new List<string>();
-                string contentBetweenBr = string.Empty;
-                bool insideBr = false;
+                var contentBetweenBr = string.Empty;
+                var insideBr = false;
 
                 foreach (var node in parentDiv.ChildNodes)
                 {
@@ -187,7 +189,7 @@ public class WRefESPExtractionService : IWordExtractionService
         }
         var tagToRemove = "<hr>";
 
-        int lastIndex = definitionText.LastIndexOf(tagToRemove);
+        var lastIndex = definitionText.LastIndexOf(tagToRemove);
 
         if (lastIndex >= 0)
         {
@@ -196,7 +198,15 @@ public class WRefESPExtractionService : IWordExtractionService
         return HTMLHelper.GetBeautified(definitionText);
     }
 
-
+    public async Task<string> GetMaskedDefinition(HtmlDocument htmlDocument, string Keyword)
+    {
+        var definition = GetDefinition(htmlDocument);
+        var lemmas = _lemmatizationService.GetAppearedReflection(definition, Keyword);
+        foreach (var lemma in await lemmas)
+            if (!string.IsNullOrEmpty(lemma))
+                definition = definition.Replace(lemma, "____");
+        return definition;
+    }
     public string GetAudioURL(HtmlDocument htmlDocument)
     {
         var audioString = htmlDocument.DocumentNode.SelectSingleNode("//*[@id=\"listen_widget\"]/script")?.InnerHtml;

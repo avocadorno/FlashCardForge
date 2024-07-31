@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AngleSharp.Common;
 using FlashCardForge.Core.Contracts.Services;
 using FlashCardForge.Core.Helpers;
 using HtmlAgilityPack;
@@ -13,10 +14,12 @@ namespace FlashCardForge.Core.Services;
 public class WRefITAExtractionService : IWordExtractionService
 {
     private readonly IWebScrappingService _scrappingService;
+    private readonly ILemmatizationService _lemmatizationService;
 
     public WRefITAExtractionService()
     {
         _scrappingService = new SeleniumScrappingService();
+        _lemmatizationService = new LemmatizationService(Mosaik.Core.Language.Italian);
     }
 
     public string BaseURL => "https://www.wordreference.com";
@@ -66,7 +69,7 @@ public class WRefITAExtractionService : IWordExtractionService
                 var senseHtml = sense.InnerHtml;
 
                 var parentDiv = sense;
-                var firstPhraseSpan = parentDiv.SelectSingleNode("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup')]");
+                var firstPhraseSpan = parentDiv.SelectSingleNode("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup') or contains(@class, 'compoundgroup')]");
                 var contentBeforePhrase = string.Empty;
                 foreach (var node in parentDiv.ChildNodes)
                 {
@@ -82,15 +85,19 @@ public class WRefITAExtractionService : IWordExtractionService
 
                 var definition = HTMLHelper.GetBold(contentBeforePhrase);
 
-                var phraseSpans = parentDiv.SelectNodes("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup')]");
+                var phraseSpans = parentDiv.SelectNodes("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup') or contains(@class, 'compoundgroup')]").ToList();
 
                 List<string> phraseList = new List<string>();
                 
                 foreach (var node in phraseSpans)
                 {
-                    var phrase = node.SelectSingleNode("//*[contains(@class, 'compound') or contains(@class, 'phrase')]").InnerHtml;
-                    var tran = node.QuerySelector(".tran").InnerHtml;
-                    phraseList.Add(phrase + " " + HTMLHelper.GetItalic(tran));
+                    var exampleList = node.QuerySelectorAll(".phrase");
+                    if (exampleList.Count == 0)
+                        exampleList = node.QuerySelectorAll(".compound");
+                    var phrase = string.Join(" ", exampleList.Select(example => example.InnerText).ToList());
+                    var tranList = node.QuerySelectorAll(".tran");
+                    var tran = string.Join(" ", tranList.Select(tran => tran.InnerText).ToList());
+                    phraseList.Add(phrase + ": " + HTMLHelper.GetItalic(tran));
                 }
 
                 var phrases = (phraseList.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
@@ -100,13 +107,23 @@ public class WRefITAExtractionService : IWordExtractionService
         }
         var tagToRemove = "<hr>";
 
-        int lastIndex = definitionText.LastIndexOf(tagToRemove);
+        var lastIndex = definitionText.LastIndexOf(tagToRemove);
 
         if (lastIndex >= 0)
         {
             definitionText = definitionText.Remove(lastIndex, tagToRemove.Length);
         }
         return HTMLHelper.GetBeautified(definitionText);
+    }
+
+    public async Task<string> GetMaskedDefinition(HtmlDocument htmlDocument, string Keyword)
+    {
+        var definition = GetDefinition(htmlDocument);
+        var lemmas = _lemmatizationService.GetAppearedReflection(definition, Keyword);
+        foreach (var lemma in await lemmas)
+            if (!string.IsNullOrEmpty(lemma))
+                definition = definition.Replace(lemma, "____");
+        return definition;
     }
 
 

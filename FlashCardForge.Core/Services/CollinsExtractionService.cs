@@ -55,6 +55,7 @@ public class CollinsExtractionService : IWordExtractionService
     }
 
     public string GetHtmlString(string keyword) => throw new NotImplementedException();
+    public Task<string> GetMaskedDefinition(HtmlDocument htmlDocument, string Keyword) => throw new NotImplementedException();
     public string GetPronunciation(HtmlDocument htmlDocument) => string.Empty;
     public string GetQueryURL(string keyword) => $"https://www.collinsdictionary.com/search/?dictCode=spanish-english&q={keyword}";
     public string GetWord(HtmlDocument htmlDocument)
