@@ -35,73 +35,38 @@ public class WRefITAExtractionService : IWordExtractionService
     public string GetDefinition(HtmlDocument htmlDocument)
     {
         var definitionText = "";
-        IList<HtmlNode> categories;
-        var categoryNodes = htmlDocument.QuerySelectorAll("#clickableHC > .category");
+        IList<HtmlNode> gramCats = htmlDocument.QuerySelectorAll("#clickableHC .gramcat");
 
-        if (categoryNodes.Count > 0 && htmlDocument.QuerySelectorAll("#clickableHC > .catsecondary").Count == 0)
-            categories = categoryNodes;
-        else
-            categories = htmlDocument.QuerySelectorAll("#clickableHC");
-
-        foreach (var category in categories)
+        foreach (var gramCat in gramCats)
         {
-            HTMLHelper.RemoveTag(category, ".headnumber");
-            HTMLHelper.RemoveTag(category, ".xr");
             var partOfSpeech = "";
             try
             {
-                var temp = category.QuerySelector(".ps");
+                var temp = gramCat.QuerySelector(".pos");
                 if (temp is null)
                     return string.Empty;
 
-                partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim());
-                HtmlNode nodeWithClassPs = null;
-                foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
-                {
-                    if (node.HasClass("ps"))
-                    {
-                        nodeWithClassPs = node;
-                        break;
-                    }
-                }
-
-                if (nodeWithClassPs != null)
-                {
-                    var nodesToRemove = new List<HtmlNode>();
-                    foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
-                    {
-                        if (node == nodeWithClassPs)
-                            break;
-                        nodesToRemove.Add(node);
-                    }
-
-                    foreach (var node in nodesToRemove)
-                        node.Remove();
-                }
+                partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim(), PSAbbreviationHelper.Language.Italian);
             }
             catch (Exception)
             {
                 return string.Empty;
             }
             definitionText += HTMLHelper.GetWrapped(partOfSpeech, "i") + "\n";
-            var catsecondaries = category.QuerySelectorAll(".catsecondary");
-            if (catsecondaries.Count == 0)
-                catsecondaries = new List<HtmlNode>() { category };
+            var senses = gramCat.QuerySelectorAll(".senses > .sense");
+            if (senses.Count == 0)
+                senses = gramCat.QuerySelectorAll(".sense");
             var definitions = new List<string>();
-            foreach (var catsecondary in catsecondaries)
+            foreach (var sense in senses)
             {
-                HTMLHelper.RemoveTag(catsecondary, ".ps");
-                var italics = new List<string> { ".SN", ".CO", ".SF", ".IN", ".RN", ".CS", ".ital", ".CN", ".NC", ".register" };
-                HTMLHelper.ReplaceTag(catsecondary, italics, "i");
-                var underlines = new List<string> { ".uline" };
-                HTMLHelper.ReplaceTag(catsecondary, underlines, "u");
-                var bolds = new List<string> { ".or", "strong .idiom" };
-                HTMLHelper.ReplaceTag(catsecondary, bolds, "b");
+                HTMLHelper.RemoveTag(sense, ".ps");
+                var italics = new List<string> {".subjarea", ".lbmisc" };
+                HTMLHelper.ReplaceTag(sense, italics, "i");
 
-                var catsecondaryHtml = catsecondary.InnerHtml;
+                var senseHtml = sense.InnerHtml;
 
-                var parentDiv = catsecondary;
-                var firstPhraseSpan = parentDiv.QuerySelector(".phrase");
+                var parentDiv = sense;
+                var firstPhraseSpan = parentDiv.SelectSingleNode("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup')]");
                 var contentBeforePhrase = string.Empty;
                 foreach (var node in parentDiv.ChildNodes)
                 {
@@ -111,76 +76,24 @@ public class WRefITAExtractionService : IWordExtractionService
                     if (node.Name != "br")
                     {
                         HTMLHelper.ReplaceTag(node, italics, "i");
-                        contentBeforePhrase += node.OuterHtml ?? node.InnerText;
+                        contentBeforePhrase += (node.Name == "span") ? node.InnerText : node.OuterHtml;
                     }
                 }
 
                 var definition = HTMLHelper.GetBold(contentBeforePhrase);
 
-                var phraseSpans = parentDiv.QuerySelectorAll(".phrase");
+                var phraseSpans = parentDiv.SelectNodes("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup')]");
 
-                List<string> partsBetweenBr = new List<string>();
-                string contentBetweenBr = string.Empty;
-                bool insideBr = false;
-
-                foreach (var node in parentDiv.ChildNodes)
+                List<string> phraseList = new List<string>();
+                
+                foreach (var node in phraseSpans)
                 {
-                    if (node.Name == "br")
-                    {
-                        if (insideBr && !string.IsNullOrEmpty(contentBetweenBr))
-                        {
-                            partsBetweenBr.Add(contentBetweenBr);
-                            contentBetweenBr = string.Empty;
-                        }
-                        insideBr = false;
-                        continue;
-                    }
-
-                    if (node.Name == "span" && node.Attributes["class"]?.Value.Contains("phrase") == true)
-                    {
-                        insideBr = true;
-                    }
-
-                    if (insideBr)
-                    {
-                        contentBetweenBr += node.OuterHtml ?? node.InnerText;
-                    }
+                    var phrase = node.SelectSingleNode("//*[contains(@class, 'compound') or contains(@class, 'phrase')]").InnerHtml;
+                    var tran = node.QuerySelector(".tran").InnerHtml;
+                    phraseList.Add(phrase + " " + HTMLHelper.GetItalic(tran));
                 }
 
-                // Add the last collected content if any
-                if (!string.IsNullOrEmpty(contentBetweenBr))
-                {
-                    partsBetweenBr.Add(contentBetweenBr);
-                }
-
-                var phraseList = partsBetweenBr.Select(phrase =>
-                {
-                    HtmlDocument doc = new HtmlDocument();
-                    doc.LoadHtml(phrase);
-
-                    var phraseSpan = doc.DocumentNode.QuerySelector(".phrase");
-
-                    StringBuilder resultHtml = new StringBuilder();
-
-                    foreach (var node in doc.DocumentNode.ChildNodes)
-                    {
-                        if (node == phraseSpan)
-                        {
-                            resultHtml.Append(node.InnerHtml);
-                        }
-                        else if (node.NodeType == HtmlNodeType.Text)
-                        {
-                            resultHtml.Append(HTMLHelper.GetItalic(node.InnerHtml));
-                        }
-                        else
-                        {
-                            resultHtml.Append(node.OuterHtml);
-                        }
-                    }
-                    return resultHtml.ToString();
-                }).ToList();
-
-                var phrases = (partsBetweenBr.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
+                var phrases = (phraseList.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
                 definitions.Add(definition + "\n" + phrases);
             }
             definitionText += (definitions.Count > 0) ? HTMLHelper.GetOrderedList(definitions) + "<hr>" : String.Empty;

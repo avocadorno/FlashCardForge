@@ -54,7 +54,7 @@ public class WRefESPExtractionService : IWordExtractionService
                 if (temp is null)
                     return string.Empty;
 
-                partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim());
+                partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim(), PSAbbreviationHelper.Language.Spanish);
                 HtmlNode nodeWithClassPs = null;
                 foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
                 {
