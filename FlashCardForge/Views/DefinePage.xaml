@@ -18,7 +18,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <StackPanel>
+            <StackPanel Padding="0,0,20,0">
                 <TextBlock Text="Word" />
                 <Grid Grid.Column="0" ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
@@ -38,10 +38,11 @@
                         Content="Get Definition" />
                 </Grid>
             </StackPanel>
-            <ScrollViewer Grid.Row="1" Padding="0,0,40,0">
+            <ScrollViewer Grid.Row="1" Padding="0,0,20,0">
                 <StackPanel Spacing="10">
                     <TextBox
                         x:Name="definitionEditor"
+                        MinHeight="150"
                         MaxHeight="300"
                         AcceptsReturn="True"
                         Header="Definition"
@@ -57,10 +58,10 @@
                         Header="Audio URL"
                         Text="{x:Bind ViewModel.AudioURL, Mode=TwoWay}" />
 
-                    <TextBox
+                    <!--<TextBox
                         x:Name="imageEditor"
                         Height="200"
-                        Header="Image" />
+                        Header="Image" />-->
                 </StackPanel>
             </ScrollViewer>
 
@@ -84,10 +85,6 @@
                     Orientation="Horizontal"
                     Spacing="10">
                     <Button Command="{x:Bind ViewModel.ClearCommand}" Content="Clear" />
-                    <Button
-                        Command="{x:Bind ViewModel.ExportCommand}"
-                        Content="Export"
-                        Style="{StaticResource AccentButtonStyle}" />
                     <Button
                         Command="{x:Bind ViewModel.AddToDeckCommand}"
                         Content="Add To Deck"

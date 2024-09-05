@@ -88,34 +88,6 @@ public partial class DefineViewModel : ObservableRecipient
 
     private bool CanAddToDeck() => !string.IsNullOrEmpty(Keyword) && !string.IsNullOrEmpty(Definition);
 
-    [RelayCommand]
-    public async Task Export()
-    {
-        foreach (var card in await _deckDataService.GetGridDataAsync())
-        {
-            var url = card.AudioURL;
-            var filePath = $"D:/Output/{card.AudioFileName}";
-            if (string.IsNullOrEmpty(url))
-                continue;
-            using HttpClient client = new HttpClient();
-            using HttpResponseMessage response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            using Stream contentStream = await response.Content.ReadAsStreamAsync(),
-                           fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-            await contentStream.CopyToAsync(fileStream);
-        }
-
-        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-        {
-            Delimiter = "|"
-        };
-
-        using var writer = new StreamWriter("D:/Output/output.csv");
-        using var csv = new CsvWriter(writer, config);
-        csv.Context.RegisterClassMap<CardMap>();
-        csv.WriteRecords(await _deckDataService.GetGridDataAsync());
-    }
-
     private async void UpdateFields()
     {
         Keyword = _wordExtractionService.GetWord(_htmlDocument);

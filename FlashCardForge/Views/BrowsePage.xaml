@@ -7,8 +7,17 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid x:Name="ContentArea">
+    <Grid
+        x:Name="ContentArea"
+        Margin="0,0,40,20"
+        RowSpacing="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
         <controls:DataGrid
+            Grid.Row="0"
             AutoGenerateColumns="False"
             GridLinesVisibility="Horizontal"
             ItemsSource="{x:Bind ViewModel.Source, Mode=OneWay}">
@@ -23,5 +32,38 @@
                 <controls:DataGridTextColumn Binding="{Binding AddedDate}" Header="AddedDate" />
             </controls:DataGrid.Columns>
         </controls:DataGrid>
+
+        <Grid
+            Grid.Row="1"
+            Height="Auto"
+            Margin="0,0,40,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel
+                Grid.Column="0"
+                HorizontalAlignment="Left"
+                Orientation="Horizontal"
+                Spacing="10">
+                <TextBox
+                    x:Name="SearchTextBox"
+                    MinWidth="300"
+                    HorizontalAlignment="Stretch"
+                    PlaceholderText="Search Term"
+                    Text="{x:Bind ViewModel.SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button
+                    Grid.Column="1"
+                    Command="{x:Bind ViewModel.ApplySearchCommand}"
+                    Content="Search" />
+            </StackPanel>
+
+            <Button
+                Grid.Column="1"
+                Command="{x:Bind ViewModel.ExportDeckCommand}"
+                Content="Export"
+                Style="{StaticResource AccentButtonStyle}" />
+        </Grid>
     </Grid>
 </Page>
