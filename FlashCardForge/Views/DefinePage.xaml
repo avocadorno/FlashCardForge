@@ -74,10 +74,10 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ComboBox
-                    Width="200"
-                    HorizontalAlignment="Left"
-                    IsEditable="True" />
+                <ComboBox x:Name="LanguageMode" SelectionChanged="LanguageMode_SelectionChanged">
+                    <ComboBoxItem Content="Spanish" />
+                    <ComboBoxItem Content="Italian" />
+                </ComboBox>
 
                 <StackPanel
                     Grid.Column="1"
