@@ -49,5 +49,5 @@ public class Card
         }
     }
 
-    public string AudioField => $"[sound:{AudioFileName}]";
+    public string AudioField => AudioFileName != string.Empty ? $"[sound:{AudioFileName}]" : string.Empty;
 }

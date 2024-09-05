@@ -66,7 +66,7 @@ public partial class App : Application
             services.AddSingleton<INavigationService, NavigationService>();
 
             // Core Services
-            services.AddSingleton<ISampleDataService, SampleDataService>();
+            services.AddSingleton<IDeckDataService, DeckDataService>();
             services.AddSingleton<IFileService, FileService>();
             services.AddSingleton<IWordExtractionService, WRefITAExtractionService>();
 

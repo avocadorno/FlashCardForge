@@ -18,7 +18,7 @@ public partial class DefineViewModel : ObservableRecipient
     private const int MAX_RETRIES = 10;
     private readonly IWordExtractionService _wordExtractionService;
 
-    private readonly List<Card> deck;
+    private readonly IDeckDataService _deckDataService;
     private readonly HtmlDocument _htmlDocument;
     private Action? _keywordTextBoxSelectAllAction;
 
@@ -37,11 +37,11 @@ public partial class DefineViewModel : ObservableRecipient
     [ObservableProperty]
     private string? _deckName;
 
-    public DefineViewModel(IWordExtractionService wordExtractionService)
+    public DefineViewModel(IWordExtractionService wordExtractionService, IDeckDataService deckDataService)
     {
         _htmlDocument = new HtmlDocument();
         _wordExtractionService = wordExtractionService;
-        deck = new List<Card>();
+        _deckDataService = deckDataService;
     }
 
     [RelayCommand(CanExecute = nameof(CanLookup))]
@@ -75,7 +75,7 @@ public partial class DefineViewModel : ObservableRecipient
     {
         if (!CanAddToDeck())
             return;
-        deck.Add(new Card
+        _deckDataService.SaveCardAsync(new Card
         {
             Word = Keyword,
             Definition = HTMLHelper.GetBeautified(Definition),
@@ -91,7 +91,7 @@ public partial class DefineViewModel : ObservableRecipient
     [RelayCommand]
     public async Task Export()
     {
-        foreach (var card in deck)
+        foreach (var card in await _deckDataService.GetGridDataAsync())
         {
             var url = card.AudioURL;
             var filePath = $"D:/Output/{card.AudioFileName}";
@@ -113,7 +113,7 @@ public partial class DefineViewModel : ObservableRecipient
         using var writer = new StreamWriter("D:/Output/output.csv");
         using var csv = new CsvWriter(writer, config);
         csv.Context.RegisterClassMap<CardMap>();
-        csv.WriteRecords(deck);
+        csv.WriteRecords(await _deckDataService.GetGridDataAsync());
     }
 
     private async void UpdateFields()
