@@ -19,6 +19,7 @@ public sealed partial class DefinePage : Page
     {
         ViewModel = App.GetService<DefineViewModel>();
         InitializeComponent();
+        LanguageMode.SelectedItem = LanguageMode.Items[0];
 
         keyWordTextBox.Loaded += (s, e) =>
         {
@@ -50,5 +51,17 @@ public sealed partial class DefinePage : Page
     {
         keyWordTextBox.SelectAll();
         keyWordTextBox.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+    }
+
+    private void LanguageMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var comboBox = sender as ComboBox;
+        var selectedItem = comboBox.SelectedItem as ComboBoxItem;
+
+        if (selectedItem != null)
+        {
+            var selectedContent = selectedItem.Content.ToString();
+            ViewModel.SetExtractionService(selectedContent);
+        }
     }
 }

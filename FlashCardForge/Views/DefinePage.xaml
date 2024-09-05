@@ -74,7 +74,10 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ComboBox x:Name="LanguageMode" SelectionChanged="LanguageMode_SelectionChanged">
+                <ComboBox
+                    x:Name="LanguageMode"
+                    SelectedItem="0"
+                    SelectionChanged="LanguageMode_SelectionChanged">
                     <ComboBoxItem Content="Spanish" />
                     <ComboBoxItem Content="Italian" />
                 </ComboBox>

@@ -10,13 +10,15 @@ using FlashCardForge.Core.Models.ClassMap;
 using FlashCardForge.Core.Models;
 using HtmlAgilityPack;
 using Microsoft.Web.WebView2.Core;
+using FlashCardForge.Core.Services;
 
 namespace FlashCardForge.ViewModels;
 
 public partial class DefineViewModel : ObservableRecipient
 {
     private const int MAX_RETRIES = 10;
-    private readonly IWordExtractionService _wordExtractionService;
+    private readonly IEnumerable<IWordExtractionService> _wordExtractionServices;
+    private IWordExtractionService _wordExtractionService;
 
     private readonly IDeckDataService _deckDataService;
     private readonly HtmlDocument _htmlDocument;
@@ -37,11 +39,21 @@ public partial class DefineViewModel : ObservableRecipient
     [ObservableProperty]
     private string? _deckName;
 
-    public DefineViewModel(IWordExtractionService wordExtractionService, IDeckDataService deckDataService)
+    public DefineViewModel(IEnumerable<IWordExtractionService> wordExtractionServices, IDeckDataService deckDataService)
     {
         _htmlDocument = new HtmlDocument();
-        _wordExtractionService = wordExtractionService;
+        _wordExtractionServices = wordExtractionServices;
+        _wordExtractionService = wordExtractionServices.First();
         _deckDataService = deckDataService;
+    }
+
+    public void SetExtractionService(string language)
+    {
+        switch (language) {
+            case "Spanish": _wordExtractionService = _wordExtractionServices.First(service => service is WRefESPExtractionService); break;
+            case "Italian": _wordExtractionService = _wordExtractionServices.First(service => service is WRefITAExtractionService); break;
+            default: throw new NotImplementedException();
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanLookup))]

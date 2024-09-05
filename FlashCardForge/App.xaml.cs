@@ -68,6 +68,7 @@ public partial class App : Application
             // Core Services
             services.AddSingleton<IDeckDataService, DeckDataService>();
             services.AddSingleton<IFileService, FileService>();
+            services.AddSingleton<IWordExtractionService, WRefESPExtractionService>();
             services.AddSingleton<IWordExtractionService, WRefITAExtractionService>();
 
             // Views and ViewModels
