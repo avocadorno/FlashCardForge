@@ -13,15 +13,12 @@ public class LanguageModeService : ILanguageModeService
 
     public int SelectedMode
     {
-        get
-        {
-            return _selectedMode;
-        }
+        get => _languageMode;
         set
         {
-            if (value >= 0 && value < _languageModes.Count)
+            if (value >= 0 && value < _languages.Count)
             {
-                _selectedMode = value;
+                _languageMode = value;
             }
             else
             {
