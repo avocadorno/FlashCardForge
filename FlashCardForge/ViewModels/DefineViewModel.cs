@@ -11,6 +11,7 @@ using FlashCardForge.Core.Models;
 using HtmlAgilityPack;
 using Microsoft.Web.WebView2.Core;
 using FlashCardForge.Core.Services;
+using System.Collections.ObjectModel;
 
 namespace FlashCardForge.ViewModels;
 
@@ -38,9 +39,15 @@ public partial class DefineViewModel : ObservableRecipient
     private string? _image;
     [ObservableProperty]
     private string? _deckName;
+    [ObservableProperty]
+    private ObservableCollection<String> _languageMode;
+    [ObservableProperty]
+    private int _selectedLanguage;
 
     public DefineViewModel(IEnumerable<IWordExtractionService> wordExtractionServices, IDeckDataService deckDataService)
     {
+        LanguageMode = new ObservableCollection<string> { "Item1", "Item2", "Item3" };
+        SelectedLanguage = 1;
         _htmlDocument = new HtmlDocument();
         _wordExtractionServices = wordExtractionServices;
         _wordExtractionService = wordExtractionServices.First();

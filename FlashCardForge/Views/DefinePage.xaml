@@ -87,6 +87,7 @@
                     HorizontalAlignment="Right"
                     Orientation="Horizontal"
                     Spacing="10">
+                    <ComboBox ItemsSource="{x:Bind ViewModel.LanguageMode}" SelectedItem="1" />
                     <Button Command="{x:Bind ViewModel.ClearCommand}" Content="Clear" />
                     <Button
                         Command="{x:Bind ViewModel.AddToDeckCommand}"
