@@ -21,6 +21,8 @@ internal class SeleniumScrappingService : IWebScrappingService
             {
                 var options = new ChromeOptions();
                 options.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
+                options.AddArgument("--disable-gpu");
+                options.AddArgument("--disable-software-rasterizer");
                 _driver = new ChromeDriver(options);
             }
             return _driver;

@@ -203,8 +203,13 @@ public class WRefESPExtractionService : IWordExtractionService
         var definition = GetDefinition(htmlDocument);
         var lemmas = _lemmatizationService.GetAppearedReflection(definition, Keyword);
         foreach (var lemma in await lemmas)
+        {
             if (!string.IsNullOrEmpty(lemma))
-                definition = definition.Replace(lemma, "____");
+            {
+                var pattern = $@"\b{lemma}\b";
+                definition = Regex.Replace(definition, pattern, $"#{lemma}#");
+            }
+        }
         return definition;
     }
     public string GetAudioURL(HtmlDocument htmlDocument)

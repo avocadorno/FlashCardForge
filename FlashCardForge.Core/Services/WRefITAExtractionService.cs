@@ -85,23 +85,25 @@ public class WRefITAExtractionService : IWordExtractionService
 
                 var definition = HTMLHelper.GetBold(contentBeforePhrase);
 
-                var phraseSpans = parentDiv.SelectNodes("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup') or contains(@class, 'compoundgroup')]").ToList();
+                var phraseSpans = parentDiv.SelectNodes("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup') or contains(@class, 'compoundgroup')]")?.ToList();
 
                 List<string> phraseList = new List<string>();
-                
-                foreach (var node in phraseSpans)
+                if (phraseSpans != null)
                 {
-                    var exampleList = node.QuerySelectorAll(".phrase");
-                    if (exampleList.Count == 0)
-                        exampleList = node.QuerySelectorAll(".compound");
-                    var phrase = string.Join(" ", exampleList.Select(example => example.InnerText).ToList());
-                    var tranList = node.QuerySelectorAll(".tran");
-                    var tran = string.Join(" ", tranList.Select(tran => tran.InnerText).ToList());
-                    phraseList.Add(phrase + ": " + HTMLHelper.GetItalic(tran));
+                    foreach (var node in phraseSpans)
+                    {
+                        var exampleList = node.QuerySelectorAll(".phrase");
+                        if (exampleList.Count == 0)
+                            exampleList = node.QuerySelectorAll(".compound");
+                        var phrase = string.Join(" ", exampleList.Select(example => example.InnerText).ToList());
+                        var tranList = node.QuerySelectorAll(".tran");
+                        var tran = string.Join(" ", tranList.Select(tran => tran.InnerText).ToList());
+                        phraseList.Add(phrase + ": " + HTMLHelper.GetItalic(tran));
+                    }
                 }
-
                 var phrases = (phraseList.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
                 definitions.Add(definition + "\n" + phrases);
+
             }
             definitionText += (definitions.Count > 0) ? HTMLHelper.GetOrderedList(definitions) + "<hr>" : String.Empty;
         }
@@ -121,8 +123,14 @@ public class WRefITAExtractionService : IWordExtractionService
         var definition = GetDefinition(htmlDocument);
         var lemmas = _lemmatizationService.GetAppearedReflection(definition, Keyword);
         foreach (var lemma in await lemmas)
+        {
             if (!string.IsNullOrEmpty(lemma))
-                definition = definition.Replace(lemma, "____");
+            {
+                var pattern = $@"\b{lemma}\b";
+                definition = Regex.Replace(definition, pattern, $"#{lemma}#");
+            }
+        }
+
         return definition;
     }
 
