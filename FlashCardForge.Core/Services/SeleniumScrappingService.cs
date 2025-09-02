@@ -20,10 +20,17 @@ internal class SeleniumScrappingService : IWebScrappingService
             if (_driver == null || IsBrowserClosed())
             {
                 var options = new ChromeOptions();
-                options.AddUserProfilePreference("profile.default_content_setting_values.images", 2);
+                options.AddArgument("--disable-features=NetworkService");
+                options.AddArgument("--disable-features=NetworkServiceInProcess");
+                options.AddArgument("--ignore-certificate-errors");
+                options.AddArgument("--ignore-ssl-errors=yes");
                 options.AddArgument("--disable-gpu");
-                options.AddArgument("--disable-software-rasterizer");
+                options.AddArgument("--disable-extensions");
+                options.AddArgument("--blink-settings=imagesEnabled=false");
+                options.PageLoadStrategy = PageLoadStrategy.Eager;
+
                 _driver = new ChromeDriver(options);
+                _driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(5);
             }
             return _driver;
         }

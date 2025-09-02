@@ -50,29 +50,72 @@ public partial class BrowseViewModel : ObservableRecipient, INavigationAware
         }
     }
 
+    private async Task<bool> DownloadFileAsync(HttpClient client, string url, string filePath)
+    {
+        try
+        {
+            using HttpResponseMessage response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return false;
+            }
+
+            using Stream contentStream = await response.Content.ReadAsStreamAsync();
+            using FileStream fileStream = new FileStream(
+                filePath,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 8192,
+                useAsync: true);
+
+            await contentStream.CopyToAsync(fileStream);
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
     [RelayCommand]
     public async Task ExportDeck()
     {
+        var downloadFolder = @"D:/Output/";
+        if (!Directory.Exists(downloadFolder))
+        {
+            Directory.CreateDirectory(downloadFolder);
+        }
+
+        using HttpClient client = new HttpClient();
+        var downloadTasks = new List<Task<bool>>();
         foreach (var card in await _deckDataService.GetGridDataAsync())
         {
             var url = card.AudioURL;
-            var filePath = $"D:/Output/{card.AudioFileName}";
+            var filePath = $"{downloadFolder}{card.AudioFileName}";
             if (string.IsNullOrEmpty(url))
                 continue;
-            using HttpClient client = new HttpClient();
-            using HttpResponseMessage response = await client.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-            using Stream contentStream = await response.Content.ReadAsStreamAsync(),
-                           fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-            await contentStream.CopyToAsync(fileStream);
+            downloadTasks.Add(DownloadFileAsync(client, url, filePath));
         }
+
+        await Task.WhenAll(downloadTasks);
 
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
         {
             Delimiter = "|"
         };
 
-        using var writer = new StreamWriter("D:/Output/output.csv");
+        var outFileName = "";
+        var fileIndex = 0;
+        do
+        {
+            outFileName = $"output_{fileIndex}.csv";
+            fileIndex += 1;
+        }
+        while (File.Exists($"{downloadFolder}{outFileName}"));
+
+        using var writer = new StreamWriter($"{downloadFolder}{outFileName}");
         using var csv = new CsvWriter(writer, config);
         csv.Context.RegisterClassMap<CardMap>();
         csv.WriteRecords(await _deckDataService.GetGridDataAsync());

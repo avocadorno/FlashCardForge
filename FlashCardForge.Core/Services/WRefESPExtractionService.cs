@@ -15,6 +15,8 @@ public class WRefESPExtractionService : IWordExtractionService
     private readonly IWebScrappingService _scrappingService;
     private readonly ILemmatizationService _lemmatizationService;
 
+    private readonly String _cssStyle = "<style>.phonetics{color:var(--body-highlighted-text-color);font-weight:700;font-family:'Lucida Sans Unicode','Arial Unicode MS','Lucida Grande'}.CA,.CC,.CH,.CN,.CO,.CS,.CV,.GR,.IN,.LF,.NC,.RN,.RR,.SF,.SN,.box.ex,.inflecter,.ital,.prov,.register,.sbox,.translation.gloss,.xr{font-style:italic}.CA,.CC,.CH,.CN,.CO,.CS,.CV,.GR,.IN,.LF,.NC,.RN,.RR,.SF,.SN,.gr,.inflecter,.prov,.register,.translation.gloss{color:var(--body-highlighted-text-color)}.HWexpansion,.aux,.bold,.catnumber,.hw,.reverse,.AF,.FF,.box.ex,.inflected,.label.ff,.phrase,.headnumber,.prep.orig,.xr a,.xrsense{font-weight:700!important}.hw{display:block}.hw:not(:first-of-type):not(.hwextension):not(.hwaltform){margin-top:2em}.BOXL{display:block;border:1px solid #000;margin-top:10px;padding:5px}.uline{text-decoration:underline}.or{font-style:italic;color:var(--body-highlighted-text-color);font-weight:700}.hw .or{font-weight:400}.phrase{font-weight:700}.phrase.example{font-style:normal}.phrase.example.inverted{margin-left:auto}.LXRN,.LXSF,.box.register,.upper{font-variant:small-caps}.TRexpansion{font-style:italic}.translation,.udef{font-family:sans-serif;margin-left:15px}.translation.register{margin-left:auto}.nomargin{margin-left:auto}.ps{font-family:sans-serif;color:var(--body-highlighted-text-color);font-weight:400}.category{margin-left:15px;margin-top:8px}.catsecondary{margin-left:30px}.third{margin-left:45px}.misc{border:1px solid #000;padding:0 5px}.xr{display:block}.xr:before{content:'➔'}.xreq,a.xr{display:inline}a .xrsense{text-decoration:none}.headnumber,.xrsense{vertical-align:super}.headnumber{position:absolute;margin-left:-15px}.headnumber10{margin-left:-23px}.third .headnumber{margin-left:-22px}span.normalized{font-weight:400;font-style:normal}.fem{font-weight:400}.sbox,div.box{padding:10px;margin:5px;border:1px solid #222;border-radius:3px}a.footnote{text-decoration:none}</style>";
+
     public WRefESPExtractionService()
     {
         _scrappingService = new SeleniumScrappingService();
@@ -36,166 +38,34 @@ public class WRefESPExtractionService : IWordExtractionService
     }
     public string GetDefinition(HtmlDocument htmlDocument)
     {
-        var definitionText = "";
+        var definition = new List<string>();
         IList<HtmlNode> categories;
         var categoryNodes = htmlDocument.QuerySelectorAll("#clickableHC > .category");
-
+        var hwInCategory = false;
         if (categoryNodes.Count > 0 && htmlDocument.QuerySelectorAll("#clickableHC > .catsecondary").Count == 0)
             categories = categoryNodes;
         else
+        {
             categories = htmlDocument.QuerySelectorAll("#clickableHC");
+            hwInCategory = true;
+        }
 
         foreach (var category in categories)
         {
-            HTMLHelper.RemoveTag(category, ".headnumber");
-            HTMLHelper.RemoveTag(category, ".xr");
-            var partOfSpeech = "";
-            try
+            if (hwInCategory)
             {
-                var temp = category.QuerySelector(".ps");
-                if (temp is null)
-                    return string.Empty;
-
-                partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim(), PSAbbreviationHelper.Language.Spanish);
-                HtmlNode nodeWithClassPs = null;
-                foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
-                {
-                    if (node.HasClass("ps"))
-                    {
-                        nodeWithClassPs = node;
-                        break;
-                    }
-                }
-
-                if (nodeWithClassPs != null)
-                {
-                    var nodesToRemove = new List<HtmlNode>();
-                    foreach (var node in htmlDocument.DocumentNode.DescendantsAndSelf())
-                    {
-                        if (node == nodeWithClassPs)
-                            break;
-                        nodesToRemove.Add(node);
-                    }
-
-                    foreach (var node in nodesToRemove)
-                        node.Remove();
-                }
+                category.QuerySelector("> .hw")?.Remove();
+                definition.Add(category.InnerHtml);
             }
-            catch (Exception)
+            else
             {
-                return string.Empty;
+                definition.Add(category.OuterHtml);
             }
-            definitionText += HTMLHelper.GetWrapped(partOfSpeech, "i") + "\n";
-            var catsecondaries = category.QuerySelectorAll(".catsecondary");
-            if (catsecondaries.Count == 0)
-                catsecondaries = new List<HtmlNode>() { category };
-            var definitions = new List<string>();
-            foreach (var catsecondary in catsecondaries)
-            {
-                HTMLHelper.RemoveTag(catsecondary, ".ps");
-                var italics = new List<string> { ".SN", ".CO", ".SF", ".IN", ".RN", ".CS", ".ital", ".CN", ".NC", ".register" };
-                HTMLHelper.ReplaceTag(catsecondary, italics, "i");
-                var underlines = new List<string> { ".uline" };
-                HTMLHelper.ReplaceTag(catsecondary, underlines, "u");
-                var bolds = new List<string> { ".or", "strong .idiom" };
-                HTMLHelper.ReplaceTag(catsecondary, bolds, "b");
 
-                var catsecondaryHtml = catsecondary.InnerHtml;
-
-                var parentDiv = catsecondary;
-                var firstPhraseSpan = parentDiv.QuerySelector(".phrase");
-                var contentBeforePhrase = string.Empty;
-                foreach (var node in parentDiv.ChildNodes)
-                {
-                    if (node == firstPhraseSpan)
-                        break;
-
-                    if (node.Name != "br")
-                    {
-                        HTMLHelper.ReplaceTag(node, italics, "i");
-                        contentBeforePhrase += node.OuterHtml ?? node.InnerText;
-                    }
-                }
-
-                var definition = HTMLHelper.GetBold(contentBeforePhrase);
-
-                var phraseSpans = parentDiv.QuerySelectorAll(".phrase");
-
-                List<string> partsBetweenBr = new List<string>();
-                var contentBetweenBr = string.Empty;
-                var insideBr = false;
-
-                foreach (var node in parentDiv.ChildNodes)
-                {
-                    if (node.Name == "br")
-                    {
-                        if (insideBr && !string.IsNullOrEmpty(contentBetweenBr))
-                        {
-                            partsBetweenBr.Add(contentBetweenBr);
-                            contentBetweenBr = string.Empty;
-                        }
-                        insideBr = false;
-                        continue;
-                    }
-
-                    if (node.Name == "span" && node.Attributes["class"]?.Value.Contains("phrase") == true)
-                    {
-                        insideBr = true;
-                    }
-
-                    if (insideBr)
-                    {
-                        contentBetweenBr += node.OuterHtml ?? node.InnerText;
-                    }
-                }
-
-                // Add the last collected content if any
-                if (!string.IsNullOrEmpty(contentBetweenBr))
-                {
-                    partsBetweenBr.Add(contentBetweenBr);
-                }
-
-                var phraseList = partsBetweenBr.Select(phrase =>
-                {
-                    HtmlDocument doc = new HtmlDocument();
-                    doc.LoadHtml(phrase);
-
-                    var phraseSpan = doc.DocumentNode.QuerySelector(".phrase");
-
-                    StringBuilder resultHtml = new StringBuilder();
-
-                    foreach (var node in doc.DocumentNode.ChildNodes)
-                    {
-                        if (node == phraseSpan)
-                        {
-                            resultHtml.Append(node.InnerHtml);
-                        }
-                        else if (node.NodeType == HtmlNodeType.Text)
-                        {
-                            resultHtml.Append(HTMLHelper.GetItalic(node.InnerHtml));
-                        }
-                        else
-                        {
-                            resultHtml.Append(node.OuterHtml);
-                        }
-                    }
-                    return resultHtml.ToString();
-                }).ToList();
-
-                var phrases = (partsBetweenBr.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
-                definitions.Add(definition + "\n" + phrases);
-            }
-            definitionText += (definitions.Count > 0) ? HTMLHelper.GetOrderedList(definitions) + "<hr>" : String.Empty;
         }
-        var tagToRemove = "<hr>";
-
-        var lastIndex = definitionText.LastIndexOf(tagToRemove);
-
-        if (lastIndex >= 0)
-        {
-            definitionText = definitionText.Remove(lastIndex, tagToRemove.Length);
-        }
-        return HTMLHelper.GetBeautified(definitionText);
+        if (definition.Any())
+            definition.Add(_cssStyle);
+        return String.Join("\n", definition);
     }
 
     public async Task<string> GetMaskedDefinition(HtmlDocument htmlDocument, string Keyword)
@@ -206,8 +76,8 @@ public class WRefESPExtractionService : IWordExtractionService
         {
             if (!string.IsNullOrEmpty(lemma))
             {
-                var pattern = $@"\b{lemma}\b";
-                definition = Regex.Replace(definition, pattern, $"#{lemma}#");
+                var pattern = $@"(?<!#)\b({Regex.Escape(lemma)})(\w*)(?!#)";
+                definition = Regex.Replace(definition, pattern, m => $"#{m.Groups[1].Value}#{m.Groups[2].Value}");
             }
         }
         return definition;

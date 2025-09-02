@@ -15,6 +15,7 @@ public class WRefITAExtractionService : IWordExtractionService
 {
     private readonly IWebScrappingService _scrappingService;
     private readonly ILemmatizationService _lemmatizationService;
+    private readonly String _cssStyle = "<style>.phonetics{color:var(--body-highlighted-text-color);font-weight:700;font-family:'Lucida Sans Unicode','Arial Unicode MS','Lucida Grande'}.CA,.CC,.CH,.CN,.CO,.CS,.CV,.GR,.IN,.LF,.NC,.RN,.RR,.SF,.SN,.box.ex,.inflecter,.ital,.prov,.register,.sbox,.translation.gloss,.xr{font-style:italic}.CA,.CC,.CH,.CN,.CO,.CS,.CV,.GR,.IN,.LF,.NC,.RN,.RR,.SF,.SN,.gr,.inflecter,.prov,.register,.translation.gloss{color:var(--body-highlighted-text-color)}.HWexpansion,.aux,.bold,.catnumber,.hw,.reverse,.AF,.FF,.box.ex,.inflected,.label.ff,.phrase,.headnumber,.prep.orig,.xr a,.xrsense{font-weight:700!important}.hw{display:block}.hw:not(:first-of-type):not(.hwextension):not(.hwaltform){margin-top:2em}.BOXL{display:block;border:1px solid #000;margin-top:10px;padding:5px}.uline{text-decoration:underline}.or{font-style:italic;color:var(--body-highlighted-text-color);font-weight:700}.hw .or{font-weight:400}.phrase{font-weight:700}.phrase.example{font-style:normal}.phrase.example.inverted{margin-left:auto}.LXRN,.LXSF,.box.register,.upper{font-variant:small-caps}.TRexpansion{font-style:italic}.translation,.udef{font-family:sans-serif;margin-left:15px}.translation.register{margin-left:auto}.nomargin{margin-left:auto}.ps{font-family:sans-serif;color:var(--body-highlighted-text-color);font-weight:400}.category{margin-left:15px;margin-top:8px}.catsecondary{margin-left:30px}.third{margin-left:45px}.misc{border:1px solid #000;padding:0 5px}.xr{display:block}.xr:before{content:'➔'}.xreq,a.xr{display:inline}a .xrsense{text-decoration:none}.headnumber,.xrsense{vertical-align:super}.headnumber{position:absolute;margin-left:-15px}.headnumber10{margin-left:-23px}.third .headnumber{margin-left:-22px}span.normalized{font-weight:400;font-style:normal}.fem{font-weight:400}.sbox,div.box{padding:10px;margin:5px;border:1px solid #222;border-radius:3px}a.footnote{text-decoration:none}</style>";
 
     public WRefITAExtractionService()
     {
@@ -37,87 +38,23 @@ public class WRefITAExtractionService : IWordExtractionService
     }
     public string GetDefinition(HtmlDocument htmlDocument)
     {
-        var definitionText = "";
-        IList<HtmlNode> gramCats = htmlDocument.QuerySelectorAll("#clickableHC .gramcat");
+        var definition = new List<string>();
+        IList<HtmlNode> categories;
+        var categoryNodes = htmlDocument.QuerySelectorAll("#clickableHC > .category");
 
-        foreach (var gramCat in gramCats)
+        if (categoryNodes.Count > 0 && htmlDocument.QuerySelectorAll("#clickableHC > .catsecondary").Count == 0)
+            categories = categoryNodes;
+        else
+            categories = htmlDocument.QuerySelectorAll("#clickableHC");
+
+        foreach (var category in categories)
         {
-            var partOfSpeech = "";
-            try
-            {
-                var temp = gramCat.QuerySelector(".pos");
-                if (temp is null)
-                    return string.Empty;
-
-                partOfSpeech = PSAbbreviationHelper.GetFullPS(temp.InnerText.Trim(), PSAbbreviationHelper.Language.Italian);
-            }
-            catch (Exception)
-            {
-                return string.Empty;
-            }
-            definitionText += HTMLHelper.GetWrapped(partOfSpeech, "i") + "\n";
-            var senses = gramCat.QuerySelectorAll(".senses > .sense");
-            if (senses.Count == 0)
-                senses = gramCat.QuerySelectorAll(".sense");
-            var definitions = new List<string>();
-            foreach (var sense in senses)
-            {
-                HTMLHelper.RemoveTag(sense, ".ps");
-                var italics = new List<string> {".subjarea", ".lbmisc" };
-                HTMLHelper.ReplaceTag(sense, italics, "i");
-
-                var senseHtml = sense.InnerHtml;
-
-                var parentDiv = sense;
-                var firstPhraseSpan = parentDiv.SelectSingleNode("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup') or contains(@class, 'compoundgroup')]");
-                var contentBeforePhrase = string.Empty;
-                foreach (var node in parentDiv.ChildNodes)
-                {
-                    if (node == firstPhraseSpan)
-                        break;
-
-                    if (node.Name != "br")
-                    {
-                        HTMLHelper.ReplaceTag(node, italics, "i");
-                        contentBeforePhrase += (node.Name == "span") ? node.InnerText : node.OuterHtml;
-                    }
-                }
-
-                var definition = HTMLHelper.GetBold(contentBeforePhrase);
-
-                var phraseSpans = parentDiv.SelectNodes("//*[contains(@class, 'phrasegroup') or contains(@class, 'phrasegroup') or contains(@class, 'compoundgroup')]")?.ToList();
-
-                List<string> phraseList = new List<string>();
-                if (phraseSpans != null)
-                {
-                    foreach (var node in phraseSpans)
-                    {
-                        var exampleList = node.QuerySelectorAll(".phrase");
-                        if (exampleList.Count == 0)
-                            exampleList = node.QuerySelectorAll(".compound");
-                        var phrase = string.Join(" ", exampleList.Select(example => example.InnerText).ToList());
-                        var tranList = node.QuerySelectorAll(".tran");
-                        var tran = string.Join(" ", tranList.Select(tran => tran.InnerText).ToList());
-                        phraseList.Add(phrase + ": " + HTMLHelper.GetItalic(tran));
-                    }
-                }
-                var phrases = (phraseList.Count > 0) ? HTMLHelper.GetUnOrderedList(phraseList) : String.Empty;
-                definitions.Add(definition + "\n" + phrases);
-
-            }
-            definitionText += (definitions.Count > 0) ? HTMLHelper.GetOrderedList(definitions) + "<hr>" : String.Empty;
+            definition.Add(category.OuterHtml);
         }
-        var tagToRemove = "<hr>";
-
-        var lastIndex = definitionText.LastIndexOf(tagToRemove);
-
-        if (lastIndex >= 0)
-        {
-            definitionText = definitionText.Remove(lastIndex, tagToRemove.Length);
-        }
-        return HTMLHelper.GetBeautified(definitionText);
+        if (definition.Any())
+            definition.Add(_cssStyle);
+        return String.Join("\n", definition);
     }
-
     public async Task<string> GetMaskedDefinition(HtmlDocument htmlDocument, string Keyword)
     {
         var definition = GetDefinition(htmlDocument);
@@ -126,14 +63,12 @@ public class WRefITAExtractionService : IWordExtractionService
         {
             if (!string.IsNullOrEmpty(lemma))
             {
-                var pattern = $@"\b{lemma}\b";
-                definition = Regex.Replace(definition, pattern, $"#{lemma}#");
+                var pattern = $@"(?<!#)\b({Regex.Escape(lemma)})(\w*)(?!#)";
+                definition = Regex.Replace(definition, pattern, m => $"#{m.Groups[1].Value}#{m.Groups[2].Value}");
             }
         }
-
         return definition;
     }
-
 
     public string GetAudioURL(HtmlDocument htmlDocument)
     {
